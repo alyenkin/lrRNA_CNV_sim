@@ -1,6 +1,6 @@
 #
-ref/hg38.fa
-ref/hg38.fa.fai
+ref/*.fa
+ref/*.fa.fai
 output/*
 
 # Byte-compiled / optimized / DLL files
