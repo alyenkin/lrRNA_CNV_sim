@@ -1,5 +1,5 @@
 import pysam
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Union
 
 
 class Exon(NamedTuple):
@@ -23,7 +23,7 @@ class Transcript:
     def __eq__(self, other):
         return self.exons == other.exons
 
-    def split_exons(self, bp: int) -> Tuple[List[Exon], Exon | None, List[Exon]]:
+    def split_exons(self, bp: int) -> Tuple[List[Exon], Union[Exon, None], List[Exon]]:
         before = []
         interrupt = None
         after = []
@@ -37,7 +37,7 @@ class Transcript:
         return before, interrupt, after
 
 
-    def split_exons_2(self, bp1: int, bp2: int) -> Tuple[List[Exon], Exon | None, List[Exon], Exon | None, List[Exon]]:
+    def split_exons_2(self, bp1: int, bp2: int) -> Tuple[List[Exon], Union[Exon, None], List[Exon], Union[Exon, None], List[Exon]]:
         bp1_before, bp1_interrupt, bp1_after = self.split_exons(bp1)
         bp2_before, bp2_interrupt, bp2_after = self.split_exons(bp2)
 
