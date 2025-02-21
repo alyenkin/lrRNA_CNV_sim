@@ -3,6 +3,7 @@ import utils
 from utils import Transcript, Exon
 import pysam
 import subprocess
+from typing import Dict, Tuple
 
 def import_gtf(gtf_file) -> Transcript:
     exons = []
@@ -33,23 +34,37 @@ def generate_fastq_file(filename: str, sequence: str, n_reads: int):
             outf.write(f'@read{i}\n{sequence}\n+\n{"I"*len(sequence)}\n') 
 
 
-dup_bps = {
-    'intronic': (100961500, 100962500),
-    'partial_one_exon': (100955840, 100960690),
-    'intraexon': (100955840, 100957690),
-    'ied_two_exons': (100963500, 100965000),
-    'ped_two_exons': (100963700, 100964750),
-    'ped_large': (100960000, 100967000),
-    'ped_larg2': (100949500, 100965830)
-}
+def import_bp_bed(bed_file: str) -> Dict[str, Tuple[int, int]]:
+    bps = dict()
+    with open(bed_file, 'r') as inf:
+        for line in inf:
+            s = line.strip().split('\t')
+            bps[s[3]] = (int(s[1]), int(s[2]))
+    return bps
+
+def generate_dup_ref(ref: pysam.FastaFile, chrom: str, start: int, end: int, bp1: int, bp2: int) -> str:
+    if (bp1 >= bp2):
+        raise Exception('Breakpoint 1 must be less than breakpoint 2')
+    if (start >= end):
+        raise Exception('Start must be less than end')
+    if (bp1 < start) or (bp2 > end):
+        raise Exception('Breakpoint is outside of the duplication region')
+
+    seq1 = ref.fetch(chrom, start, bp1)
+    seq2 = ref.fetch(chrom, bp2, end)
+    dupseq = ref.fetch(chrom, bp1, bp2)
+    return seq1 + dupseq + dupseq + seq2
+
 
 if __name__ == '__main__':
     ref_file = 'ref/hg38_chr7.fa'
     muc3a = import_gtf('ref/MUC3A.gtf')
     ref = pysam.FastaFile(ref_file)
 
+    dup_bps = import_bp_bed('input/dup_bps.bed')
+
     for k, v in dup_bps.items():
-        dup = utils.duplication(muc3a, v[0], v[1])
+        dup = utils.transcript_duplication(muc3a, v[0], v[1])
         generate_fastq_file(f'output/fastq/{k}.fastq', dup.getsequence(ref), 100)
 
     fastq_files = Path('output/fastq').glob('*.fastq')

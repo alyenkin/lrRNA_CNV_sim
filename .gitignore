@@ -1,4 +1,5 @@
 #
+input/*
 ref/*.fa
 ref/*.fa.fai
 output/*
